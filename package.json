@@ -1,0 +1,22 @@
+{
+  "name": "counsel",
+  "version": "1.0.0",
+  "description": "an autonomous legal research agent.",
+  "main": "index.js",
+  "scripts": {
+    "dev:convex": "convex dev",
+    "codegen": "convex codegen",
+    "test": "echo \"No tests configured yet\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.48",
+    "@convex-dev/agent": "^0.6.1",
+    "@convex-dev/workflow": "^0.3.8",
+    "ai": "^6.0.141",
+    "convex": "^1.34.1",
+    "zod": "^4.3.6"
+  }
+}
