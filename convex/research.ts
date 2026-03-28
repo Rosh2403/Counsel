@@ -1,5 +1,5 @@
 import { WorkflowManager } from "@convex-dev/workflow";
-import { createThread } from "@convex-dev/agent";
+import { Agent, createThread } from "@convex-dev/agent";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -110,6 +110,52 @@ export const startResearch = mutation({
   },
 });
 
+export const retrySource = mutation({
+  args: {
+    threadId: v.id("threads"),
+    sourceType: v.union(v.literal("sso"), v.literal("mas"), v.literal("cases")),
+    query: v.optional(v.string()),
+    keywords: v.optional(v.string()),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+    const retryQuery = args.query ?? thread.query;
+    const retryKeywords = args.keywords ?? "";
+
+    await ctx.db.patch(args.threadId, { status: "searching" });
+    await ctx.scheduler.runAfter(0, internal.research.retrySourceAction, {
+      threadId: args.threadId,
+      sourceType: args.sourceType,
+      query: retryQuery,
+      keywords: retryKeywords,
+    });
+
+    return "retry_scheduled";
+  },
+});
+
+export const generateBriefNow = mutation({
+  args: {
+    threadId: v.id("threads"),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+    await ctx.scheduler.runAfter(0, internal.research.generateAndStoreBriefAction, {
+      threadId: args.threadId,
+      query: thread.query,
+    });
+    return "brief_generation_scheduled";
+  },
+});
+
 export const researchWorkflow = workflow.define({
   args: {
     threadId: v.id("threads"),
@@ -146,13 +192,50 @@ export const researchWorkflow = workflow.define({
   },
 });
 
+export const retrySourceAction = internalAction({
+  args: {
+    threadId: v.id("threads"),
+    sourceType: v.union(v.literal("sso"), v.literal("mas"), v.literal("cases")),
+    query: v.string(),
+    keywords: v.string(),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    if (args.sourceType === "sso") {
+      await ctx.runAction(internal.tinyfish.searchStatutes, {
+        threadId: args.threadId,
+        query: args.query,
+        keywords: args.keywords,
+      });
+    } else if (args.sourceType === "mas") {
+      await ctx.runAction(internal.tinyfish.searchRegulations, {
+        threadId: args.threadId,
+        query: args.query,
+        keywords: args.keywords,
+      });
+    } else {
+      await ctx.runAction(internal.tinyfish.searchCaseLaw, {
+        threadId: args.threadId,
+        query: args.query,
+        keywords: args.keywords,
+      });
+    }
+
+    await ctx.runMutation(internal.research.updateThreadStatus, {
+      threadId: args.threadId,
+      status: "evaluating",
+    });
+    return "retry_complete";
+  },
+});
+
 export const runResearchAgent = internalAction({
   args: {
     threadId: v.id("threads"),
     query: v.string(),
   },
   returns: v.string(),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     await ctx.runMutation(internal.research.updateThreadStatus, {
       threadId: args.threadId,
       status: "searching",
@@ -187,8 +270,8 @@ export const runResearchAgent = internalAction({
       title: `Research: ${args.query}`,
     });
 
-    const agent = createLegalResearchAgent(args.threadId);
-    const result = await agent.generateText(
+    const agent: Agent = createLegalResearchAgent(args.threadId);
+    const result: { text: string } = await agent.generateText(
       ctx,
       { threadId: agentThreadId },
       {
@@ -207,34 +290,61 @@ If one source is weak, use refine_and_search for that source.`,
   },
 });
 
+export const generateAndStoreBriefAction = internalAction({
+  args: {
+    threadId: v.id("threads"),
+    query: v.string(),
+  },
+  returns: v.string(),
+  handler: async (ctx, args): Promise<string> => {
+    await ctx.runMutation(internal.research.updateThreadStatus, {
+      threadId: args.threadId,
+      status: "synthesizing",
+    });
+
+    const brief: string = await ctx.runAction(internal.research.generateBrief, {
+      threadId: args.threadId,
+      query: args.query,
+    });
+
+    await ctx.runMutation(internal.research.storeBrief, {
+      threadId: args.threadId,
+      brief,
+    });
+    return "brief_complete";
+  },
+});
+
 export const generateBrief = internalAction({
   args: {
     threadId: v.id("threads"),
     query: v.string(),
   },
   returns: v.string(),
-  handler: async (ctx, args) => {
-    const sources = await ctx.runQuery(internal.research.getThreadSourcesForSynthesis, {
+  handler: async (ctx, args): Promise<string> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sources: any[] = await ctx.runQuery(internal.research.getThreadSourcesForSynthesis, {
       threadId: args.threadId,
     });
 
-    const statutes = sources.filter((s) => s.type === "sso");
-    const regulations = sources.filter((s) => s.type === "mas");
-    const cases = sources.filter((s) => s.type === "cases");
-    const sourceCount = sources.filter((s) => s.status === "complete").length;
+    const statutes = sources.filter((s: { type: string }) => s.type === "sso");
+    const regulations = sources.filter((s: { type: string }) => s.type === "mas");
+    const cases = sources.filter((s: { type: string }) => s.type === "cases");
+    const sourceCount = sources.filter((s: { status: string }) => s.status === "complete").length;
 
     const today = new Date().toISOString().slice(0, 10);
 
     if (!process.env.OPENAI_API_KEY) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const citations = sources
-        .flatMap((source) => {
-          const resultBlock = source.results as any;
+        .flatMap((source: any) => {
+          const resultBlock = source.results as Record<string, unknown> | undefined;
           if (!resultBlock || typeof resultBlock !== "object") return [];
           const arr =
             resultBlock.statutes || resultBlock.regulations || resultBlock.cases || [];
           if (!Array.isArray(arr)) return [];
           return arr
-            .map((item: any) => ({
+            .map((item: Record<string, unknown>) => ({
               title:
                 item?.act_name ||
                 item?.title ||
@@ -242,12 +352,12 @@ export const generateBrief = internalAction({
                 `${source.type.toUpperCase()} result`,
               url: item?.url,
             }))
-            .filter((x: any) => typeof x.url === "string" && x.url.length > 0);
+            .filter((x: { title: unknown; url: unknown }) => typeof x.url === "string" && (x.url as string).length > 0);
         })
         .slice(0, 12);
 
       const citationLines = citations.length
-        ? citations.map((c, i) => `[${i + 1}] [${c.title}](${c.url})`).join("\n")
+        ? citations.map((c: { title: unknown; url: unknown }, i: number) => `[${i + 1}] [${c.title}](${c.url})`).join("\n")
         : "[1] Source extraction completed, but no canonical URLs were returned.";
 
       return `# Legal Research Brief

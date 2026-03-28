@@ -1,0 +1,520 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-newsreader);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-heading: var(--font-newsreader);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* ── Counsel Design System ─────────────────────── */
+  --bg: #FAF9F6;
+  --bg-warm: #F5F2ED;
+  --surface: #FFFFFF;
+  --border: #E8E4DE;
+  --border-strong: #D4CFC7;
+  --text-primary: #1A1714;
+  --text-secondary: #4A4640;
+  --text-muted: #8A857D;
+  --navy: #1B2A4A;
+  --navy-light: #2C4370;
+  --navy-muted: #1B2A4A22;
+  --accent: #B8860B;
+  --accent-bg: #B8860B0A;
+  --accent-border: #B8860B20;
+  --success: #2D6A4F;
+  --success-bg: #2D6A4F0A;
+  --error: #9B2C2C;
+
+  /* ── Shadcn Overrides ──────────────────────────── */
+  --background: #FAF9F6;
+  --foreground: #1A1714;
+  --card: #FFFFFF;
+  --card-foreground: #1A1714;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1714;
+  --primary: #1B2A4A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F2ED;
+  --secondary-foreground: #4A4640;
+  --muted: #F5F2ED;
+  --muted-foreground: #8A857D;
+  --accent-foreground: #FFFFFF;
+  --destructive: #9B2C2C;
+  --input: #D4CFC7;
+  --ring: #1B2A4A;
+  --radius: 0.625rem;
+  --chart-1: #1B2A4A;
+  --chart-2: #B8860B;
+  --chart-3: #2D6A4F;
+  --chart-4: #4A4640;
+  --chart-5: #8A857D;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1A1714;
+  --sidebar-primary: #1B2A4A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F5F2ED;
+  --sidebar-accent-foreground: #4A4640;
+  --sidebar-border: #E8E4DE;
+  --sidebar-ring: #1B2A4A;
+}
+
+/* ── Base ─────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ── Noise Texture Overlay ────────────────────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* ── Keyframe Animations ──────────────────────────── */
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes status-flash {
+  0% { filter: brightness(1); }
+  30% { filter: brightness(1.4); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes gauge-fill {
+  from { stroke-dashoffset: var(--gauge-circumference); }
+  to { stroke-dashoffset: var(--gauge-offset); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes recording-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Counsel Input ────────────────────────────────── */
+.counsel-input {
+  width: 100%;
+  padding: 14px 56px 14px 20px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.counsel-input::placeholder {
+  color: var(--text-muted);
+}
+
+.counsel-input:focus {
+  border-color: var(--navy);
+  box-shadow: 0 2px 12px rgba(27, 42, 74, 0.08);
+}
+
+.counsel-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Query Chips ──────────────────────────────────── */
+.counsel-chip {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 10px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.counsel-chip:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: var(--navy-muted);
+}
+
+/* ── Pulse Dot ────────────────────────────────────── */
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-opacity 2s ease-in-out infinite;
+}
+
+.pulse-dot-complete {
+  background: var(--success);
+  animation: none;
+}
+
+.pulse-dot-error {
+  background: var(--error);
+  animation: none;
+}
+
+/* ── Recording Dot ────────────────────────────────── */
+.recording-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: recording-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Cursor Blink ─────────────────────────────────── */
+.cursor-blink::after {
+  content: "▋";
+  margin-left: 1px;
+  animation: cursor-blink 1s steps(2) infinite;
+  color: var(--navy);
+}
+
+/* ── Status Flash ─────────────────────────────────── */
+.status-flash {
+  animation: status-flash 600ms ease-out;
+}
+
+/* ── Fade In Up ───────────────────────────────────── */
+.fade-in-up {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
+/* ── Spinner ──────────────────────────────────────── */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ── Browser Chrome ───────────────────────────────── */
+.browser-chrome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-warm);
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+}
+
+.browser-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.browser-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.browser-url-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ── Source Badges ─────────────────────────────────── */
+.source-badge {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.source-badge-sso {
+  color: var(--navy);
+  background: var(--navy-muted);
+}
+
+.source-badge-mas {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.source-badge-cases {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+/* ── Toast ────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  animation: slide-in-right 0.3s ease-out;
+  max-width: 320px;
+}
+
+.toast-exiting {
+  animation: slide-out-right 0.3s ease-in forwards;
+}
+
+.toast-success {
+  border-left: 3px solid var(--success);
+  color: var(--success);
+}
+
+.toast-error {
+  border-left: 3px solid var(--error);
+  color: var(--error);
+}
+
+.toast-info {
+  border-left: 3px solid var(--navy);
+  color: var(--navy);
+}
+
+/* ── Score Gauge ──────────────────────────────────── */
+.gauge-circle {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.gauge-fill {
+  animation: gauge-fill 1s ease-out forwards;
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+/* ── Accordion Collapse ───────────────────────────── */
+.accordion-content {
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+}
+
+.accordion-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* ── Progress Bar ─────────────────────────────────── */
+.progress-bar-fill {
+  transition: width 0.4s ease;
+}
+
+/* ── Brief Markdown Typography ────────────────────── */
+.brief-content h2 {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--navy);
+  margin-top: 24px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.brief-content p {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin-bottom: 12px;
+}
+
+.brief-content a {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 10px;
+  color: var(--navy);
+  background: var(--navy-muted);
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.brief-content a:hover {
+  background: rgba(27, 42, 74, 0.2);
+}
+
+.brief-content strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.brief-content ul,
+.brief-content ol {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin-bottom: 12px;
+  padding-left: 20px;
+}
+
+.brief-content li {
+  margin-bottom: 4px;
+}
+
+/* ── Auto-synth Toggle ────────────────────────────── */
+.auto-toggle {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-warm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auto-toggle.active {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+.auto-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.auto-toggle.active .auto-toggle-thumb {
+  left: 16px;
+  background: white;
+}

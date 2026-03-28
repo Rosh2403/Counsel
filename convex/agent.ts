@@ -7,7 +7,8 @@ import type { Id } from "./_generated/dataModel";
 const SHARED_INSTRUCTIONS =
   "You are a legal research agent specializing in Singapore law. You search statutes, regulations, and case law to answer legal questions. When you receive search results, evaluate if they sufficiently answer the query. If a source returned too few or irrelevant results, use refine_and_search to try again with better keywords.";
 
-export function createLegalResearchAgent(appThreadId: Id<"threads">) {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function createLegalResearchAgent(appThreadId: Id<"threads">): Agent {
   return new Agent(components.agent, {
     name: "Counsel Research Agent",
     instructions: SHARED_INSTRUCTIONS,
@@ -20,12 +21,13 @@ export function createLegalResearchAgent(appThreadId: Id<"threads">) {
           query: z.string(),
           keywords: z.string(),
         }),
-        execute: async (ctx, input) => {
-          return await ctx.runAction(internal.tinyfish.searchStatutes, {
+        execute: async (ctx, input): Promise<string> => {
+          const result = await ctx.runAction(internal.tinyfish.searchStatutes, {
             threadId: appThreadId,
             query: input.query,
             keywords: input.keywords,
           });
+          return JSON.stringify(result);
         },
       }),
       search_regulations: createTool({
@@ -34,12 +36,13 @@ export function createLegalResearchAgent(appThreadId: Id<"threads">) {
           query: z.string(),
           keywords: z.string(),
         }),
-        execute: async (ctx, input) => {
-          return await ctx.runAction(internal.tinyfish.searchRegulations, {
+        execute: async (ctx, input): Promise<string> => {
+          const result = await ctx.runAction(internal.tinyfish.searchRegulations, {
             threadId: appThreadId,
             query: input.query,
             keywords: input.keywords,
           });
+          return JSON.stringify(result);
         },
       }),
       search_case_law: createTool({
@@ -49,12 +52,13 @@ export function createLegalResearchAgent(appThreadId: Id<"threads">) {
           query: z.string(),
           keywords: z.string(),
         }),
-        execute: async (ctx, input) => {
-          return await ctx.runAction(internal.tinyfish.searchCaseLaw, {
+        execute: async (ctx, input): Promise<string> => {
+          const result = await ctx.runAction(internal.tinyfish.searchCaseLaw, {
             threadId: appThreadId,
             query: input.query,
             keywords: input.keywords,
           });
+          return JSON.stringify(result);
         },
       }),
       refine_and_search: createTool({
@@ -64,26 +68,29 @@ export function createLegalResearchAgent(appThreadId: Id<"threads">) {
           source: z.enum(["sso", "mas", "cases"]),
           refined_query: z.string(),
         }),
-        execute: async (ctx, input) => {
+        execute: async (ctx, input): Promise<string> => {
           if (input.source === "sso") {
-            return await ctx.runAction(internal.tinyfish.searchStatutes, {
+            const result = await ctx.runAction(internal.tinyfish.searchStatutes, {
               threadId: appThreadId,
               query: input.refined_query,
               keywords: "",
             });
+            return JSON.stringify(result);
           }
           if (input.source === "mas") {
-            return await ctx.runAction(internal.tinyfish.searchRegulations, {
+            const result = await ctx.runAction(internal.tinyfish.searchRegulations, {
               threadId: appThreadId,
               query: input.refined_query,
               keywords: "",
             });
+            return JSON.stringify(result);
           }
-          return await ctx.runAction(internal.tinyfish.searchCaseLaw, {
+          const result = await ctx.runAction(internal.tinyfish.searchCaseLaw, {
             threadId: appThreadId,
             query: input.refined_query,
             keywords: "",
           });
+          return JSON.stringify(result);
         },
       }),
     },

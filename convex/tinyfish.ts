@@ -86,6 +86,7 @@ function classifyTinyFishError(error: unknown): {
 }
 
 async function runTinyFishSearch(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ctx: any,
   args: {
     threadId: Id<"threads">;
@@ -93,10 +94,10 @@ async function runTinyFishSearch(
     query: string;
     keywords: string;
   },
-) {
+): Promise<{ ok: true; sourceId: Id<"sources">; results: unknown } | { ok: false; sourceId: Id<"sources">; error: { kind: ErrorKind; message: string; helpMessage: string } }> {
   const sourceMeta = SOURCE_META[args.type];
   const effectiveQuery = `${args.query} ${args.keywords}`.trim();
-  const sourceId = await ctx.runMutation(internal.tinyfish.ensureSourceSearching, {
+  const sourceId: Id<"sources"> = await ctx.runMutation(internal.tinyfish.ensureSourceSearching, {
     threadId: args.threadId,
     type: args.type,
     query: effectiveQuery,
@@ -155,6 +156,7 @@ async function runTinyFishSearch(
           continue;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let eventData: any;
         try {
           eventData = JSON.parse(payload);
@@ -219,7 +221,7 @@ export const searchStatutes = internalAction({
     query: v.string(),
     keywords: v.string(),
   },
-  handler: async (ctx, args) =>
+  handler: async (ctx, args): ReturnType<typeof runTinyFishSearch> =>
     runTinyFishSearch(ctx, {
       ...args,
       type: "sso",
@@ -232,7 +234,7 @@ export const searchRegulations = internalAction({
     query: v.string(),
     keywords: v.string(),
   },
-  handler: async (ctx, args) =>
+  handler: async (ctx, args): ReturnType<typeof runTinyFishSearch> =>
     runTinyFishSearch(ctx, {
       ...args,
       type: "mas",
@@ -245,7 +247,7 @@ export const searchCaseLaw = internalAction({
     query: v.string(),
     keywords: v.string(),
   },
-  handler: async (ctx, args) =>
+  handler: async (ctx, args): ReturnType<typeof runTinyFishSearch> =>
     runTinyFishSearch(ctx, {
       ...args,
       type: "cases",
