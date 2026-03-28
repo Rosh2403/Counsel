@@ -12,7 +12,7 @@ type ErrorKind =
   | "unknown";
 
 const TINYFISH_URL = "https://agent.tinyfish.ai/v1/automation/run-sse";
-const TIMEOUT_MS = 180_000;
+const TIMEOUT_MS = 420_000;
 
 const SSO_GOAL =
   "1. Type the following search query into the search box on this page and press Enter or click Search: {query}. 2. On the search results page, extract the top 5 most relevant legislation results. For each result: a. Note the Act title and section reference shown in the search result b. Click into the result to view the full section text c. Extract: the full Act name, Part number (if shown), Section number, Section title, and the complete text of that section d. Copy the current page URL e. Click the browser Back button to return to search results before proceeding to the next result 3. Do NOT click on any subsidiary legislation or revised editions - only primary Acts. 4. If a search result leads to a Table of Contents page instead of a specific section, extract the Act name and note 'TOC only' in the text field. 5. If fewer than 5 results exist, extract all available results. 6. Return JSON: { \"statutes\": [{ \"act_name\": \"\", \"part\": \"\", \"section_number\": \"\", \"section_title\": \"\", \"text\": \"\", \"url\": \"\" }] }";
@@ -53,7 +53,11 @@ function classifyTinyFishError(error: unknown): {
       helpMessage: "Set TINYFISH_API_KEY in Convex and .env.local",
     };
   }
-  if (lower.includes("timeout") || lower.includes("aborted")) {
+  if (
+    lower.includes("timeout") ||
+    lower.includes("aborted") ||
+    lower.includes("aborterror")
+  ) {
     return {
       kind: "timeout",
       message,
