@@ -110,6 +110,52 @@ export const startResearch = mutation({
   },
 });
 
+export const retrySource = mutation({
+  args: {
+    threadId: v.id("threads"),
+    sourceType: v.union(v.literal("sso"), v.literal("mas"), v.literal("cases")),
+    query: v.optional(v.string()),
+    keywords: v.optional(v.string()),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+    const retryQuery = args.query ?? thread.query;
+    const retryKeywords = args.keywords ?? "";
+
+    await ctx.db.patch(args.threadId, { status: "searching" });
+    await ctx.scheduler.runAfter(0, internal.research.retrySourceAction, {
+      threadId: args.threadId,
+      sourceType: args.sourceType,
+      query: retryQuery,
+      keywords: retryKeywords,
+    });
+
+    return "retry_scheduled";
+  },
+});
+
+export const generateBriefNow = mutation({
+  args: {
+    threadId: v.id("threads"),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+    await ctx.scheduler.runAfter(0, internal.research.generateAndStoreBriefAction, {
+      threadId: args.threadId,
+      query: thread.query,
+    });
+    return "brief_generation_scheduled";
+  },
+});
+
 export const researchWorkflow = workflow.define({
   args: {
     threadId: v.id("threads"),
@@ -143,6 +189,43 @@ export const researchWorkflow = workflow.define({
     });
 
     return brief;
+  },
+});
+
+export const retrySourceAction = internalAction({
+  args: {
+    threadId: v.id("threads"),
+    sourceType: v.union(v.literal("sso"), v.literal("mas"), v.literal("cases")),
+    query: v.string(),
+    keywords: v.string(),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    if (args.sourceType === "sso") {
+      await ctx.runAction(internal.tinyfish.searchStatutes, {
+        threadId: args.threadId,
+        query: args.query,
+        keywords: args.keywords,
+      });
+    } else if (args.sourceType === "mas") {
+      await ctx.runAction(internal.tinyfish.searchRegulations, {
+        threadId: args.threadId,
+        query: args.query,
+        keywords: args.keywords,
+      });
+    } else {
+      await ctx.runAction(internal.tinyfish.searchCaseLaw, {
+        threadId: args.threadId,
+        query: args.query,
+        keywords: args.keywords,
+      });
+    }
+
+    await ctx.runMutation(internal.research.updateThreadStatus, {
+      threadId: args.threadId,
+      status: "evaluating",
+    });
+    return "retry_complete";
   },
 });
 
@@ -204,6 +287,31 @@ If one source is weak, use refine_and_search for that source.`,
     });
 
     return result.text;
+  },
+});
+
+export const generateAndStoreBriefAction = internalAction({
+  args: {
+    threadId: v.id("threads"),
+    query: v.string(),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    await ctx.runMutation(internal.research.updateThreadStatus, {
+      threadId: args.threadId,
+      status: "synthesizing",
+    });
+
+    const brief = await ctx.runAction(internal.research.generateBrief, {
+      threadId: args.threadId,
+      query: args.query,
+    });
+
+    await ctx.runMutation(internal.research.storeBrief, {
+      threadId: args.threadId,
+      brief,
+    });
+    return "brief_complete";
   },
 });
 
