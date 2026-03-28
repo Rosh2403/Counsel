@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  // Exclude pdfjs-dist worker from serverless bundling
+  serverExternalPackages: ["pdfjs-dist"],
 };
 
 export default nextConfig;

@@ -9,6 +9,7 @@
  */
 
 import type * as agent from "../agent.js";
+import type * as documents from "../documents.js";
 import type * as queries from "../queries.js";
 import type * as research from "../research.js";
 import type * as tinyfish from "../tinyfish.js";
@@ -21,6 +22,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
+  documents: typeof documents;
   queries: typeof queries;
   research: typeof research;
   tinyfish: typeof tinyfish;

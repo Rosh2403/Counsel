@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { QueryInput } from "@/components/QueryInput";
+import Link from "next/link";
 
 const SUGGESTIONS = [
   "MAS crypto regulations",
@@ -122,6 +123,19 @@ export default function LandingPage() {
             </button>
           ))}
         </div>
+
+        {/* Upload link */}
+        <Link
+          href="/upload"
+          style={{
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+            fontSize: 12,
+            color: "var(--text-muted)",
+            textDecoration: "none",
+          }}
+        >
+          or upload a document for analysis
+        </Link>
       </div>
     </div>
   );

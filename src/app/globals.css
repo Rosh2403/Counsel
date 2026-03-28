@@ -518,3 +518,8 @@ body::before {
   left: 16px;
   background: white;
 }
+
+/* Hide buttons during PDF generation */
+.pdf-generating .no-pdf {
+  display: none !important;
+}

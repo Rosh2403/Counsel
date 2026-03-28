@@ -12,16 +12,16 @@ type ErrorKind =
   | "unknown";
 
 const TINYFISH_URL = "https://agent.tinyfish.ai/v1/automation/run-sse";
-const TIMEOUT_MS = 180_000;
+const TIMEOUT_MS = 120_000;
 
 const SSO_GOAL =
-  "1. Type the following search query into the search box on this page and press Enter or click Search: {query}. 2. On the search results page, extract the top 5 most relevant legislation results. For each result: a. Note the Act title and section reference shown in the search result b. Click into the result to view the full section text c. Extract: the full Act name, Part number (if shown), Section number, Section title, and the complete text of that section d. Copy the current page URL e. Click the browser Back button to return to search results before proceeding to the next result 3. Do NOT click on any subsidiary legislation or revised editions - only primary Acts. 4. If a search result leads to a Table of Contents page instead of a specific section, extract the Act name and note 'TOC only' in the text field. 5. If fewer than 5 results exist, extract all available results. 6. Return JSON: { \"statutes\": [{ \"act_name\": \"\", \"part\": \"\", \"section_number\": \"\", \"section_title\": \"\", \"text\": \"\", \"url\": \"\" }] }";
+  "1. Type the following search query into the search box on this page and press Enter or click Search: {query}. 2. Wait for search results to appear. 3. Extract the top 5 results shown on the page. For each result, extract the title, section reference, and any snippet text visible in the listing. Do NOT click into individual results. 4. Return JSON: { \"statutes\": [{ \"act_name\": \"\", \"section_number\": \"\", \"section_title\": \"\", \"text\": \"\", \"url\": \"\" }] }";
 
 const MAS_GOAL =
-  "1. You are on the MAS search results page. 2. Identify the top 5 most relevant regulatory documents (circulars, guidelines, notices, or consultation papers). 3. For each result: a. Note the title and date from the search listing b. Click into the document c. Extract: document title, publication date, document type (circular/guideline/notice/consultation), and the first 500 words of the document content (focus on scope, definitions, and key requirements sections) d. Copy the current page URL e. Click Back to return to search results 4. Do NOT click on media releases or speeches - only regulatory documents. 5. If a document is a PDF that opens in a viewer, extract whatever text is visible on screen. 6. If fewer than 5 relevant results, extract all available. 7. Return JSON: { \"regulations\": [{ \"title\": \"\", \"date\": \"\", \"type\": \"\", \"summary\": \"\", \"url\": \"\" }] }";
+  "1. You are on the MAS search results page. 2. Extract the top 5 results shown on the page. For each result, extract: the title, date, and any description or snippet shown in the listing. Do NOT click into individual documents. 3. Return JSON: { \"regulations\": [{ \"title\": \"\", \"date\": \"\", \"type\": \"\", \"summary\": \"\", \"url\": \"\" }] }";
 
 const CASES_GOAL =
-  "1. You are on the Singapore Law Watch judgments search page. 2. Look at the search results showing court judgments. 3. Extract the top 5 most relevant cases. For each: a. Extract from the listing: case name, neutral citation, date, and court name b. Click into the case page c. Extract: the case summary/headnote (usually at the top), the key holdings or principles established, and the relevant statutory provisions cited d. Copy the current page URL e. Click Back to return to search results 4. Prioritize High Court and Court of Appeal decisions over lower courts. 5. If a case page has no summary, extract the first 300 words of the judgment. 6. Return JSON: { \"cases\": [{ \"case_name\": \"\", \"citation\": \"\", \"date\": \"\", \"court\": \"\", \"summary\": \"\", \"holdings\": \"\", \"statutes_cited\": \"\", \"url\": \"\" }] }";
+  "1. You are on the Singapore Law Watch judgments search page. 2. Extract the top 5 case results shown on the page. For each, extract: case name, citation, date, and court name from the listing. Do NOT click into individual cases. 3. Return JSON: { \"cases\": [{ \"case_name\": \"\", \"citation\": \"\", \"date\": \"\", \"court\": \"\", \"summary\": \"\", \"url\": \"\" }] }";
 
 const SOURCE_META: Record<SourceType, { url: string; goal: string }> = {
   sso: {
@@ -96,7 +96,7 @@ async function runTinyFishSearch(
   },
 ): Promise<{ ok: true; sourceId: Id<"sources">; results: unknown } | { ok: false; sourceId: Id<"sources">; error: { kind: ErrorKind; message: string; helpMessage: string } }> {
   const sourceMeta = SOURCE_META[args.type];
-  const effectiveQuery = `${args.query} ${args.keywords}`.trim();
+  const effectiveQuery = args.query.trim();
   const sourceId: Id<"sources"> = await ctx.runMutation(internal.tinyfish.ensureSourceSearching, {
     threadId: args.threadId,
     type: args.type,
