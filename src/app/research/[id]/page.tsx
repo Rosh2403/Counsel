@@ -9,6 +9,8 @@ import { ActivityLog } from "@/components/ActivityLog";
 import { BriefRenderer } from "@/components/BriefRenderer";
 import { ScoreGauges } from "@/components/ScoreGauges";
 import { CopyBriefButton } from "@/components/CopyBriefButton";
+import { DownloadPdfButton } from "@/components/DownloadPdfButton";
+import { ShareButton } from "@/components/ShareButton";
 import { useToast } from "@/components/ToastContainer";
 import { STATUS_LABELS } from "@/lib/types";
 import type { Source, SourceType, ThreadStatus } from "@/lib/types";
@@ -20,6 +22,7 @@ export default function ResearchPage(props: { params: Promise<{ id: string }> })
 
   const thread = useQuery(api.queries.getThread, { threadId });
   const rawSources = useQuery(api.queries.getSources, { threadId });
+  const linkedDocument = useQuery(api.documents.getDocumentByThreadId, { threadId });
   const sources = useMemo(
     () => (rawSources ?? []) as unknown as Source[],
     [rawSources]
@@ -162,6 +165,8 @@ export default function ResearchPage(props: { params: Promise<{ id: string }> })
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <ShareButton />
+
           {/* Auto-synthesize toggle */}
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span
@@ -225,6 +230,36 @@ export default function ResearchPage(props: { params: Promise<{ id: string }> })
           gap: 20,
         }}
       >
+        {/* Document back-link banner */}
+        {linkedDocument && (
+          <a
+            href={`/upload/${linkedDocument._id}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 16px",
+              borderRadius: 8,
+              background: "var(--bg-warm)",
+              textDecoration: "none",
+            }}
+          >
+            <FileText size={12} style={{ color: "var(--navy)" }} />
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                fontSize: 12,
+                color: "var(--text-secondary)",
+              }}
+            >
+              From document:{" "}
+              <span style={{ color: "var(--navy)", fontWeight: 500 }}>
+                {linkedDocument.fileName}
+              </span>
+            </span>
+          </a>
+        )}
+
         {/* Query display */}
         <div style={{ padding: "8px 0" }}>
           <h1
@@ -366,6 +401,7 @@ export default function ResearchPage(props: { params: Promise<{ id: string }> })
         {/* ── SECTION C: Brief Panel ──────────────── */}
         {showBrief && (
           <section
+            id="brief-content"
             className="fade-in-up"
             style={{
               background: "var(--surface)",
@@ -423,6 +459,12 @@ export default function ResearchPage(props: { params: Promise<{ id: string }> })
                 {completedSources}/{sources.length} sources
               </span>
               {thread.brief && <CopyBriefButton markdown={thread.brief} />}
+              {thread.brief && (
+                <DownloadPdfButton
+                  targetId="brief-content"
+                  filename={`counsel-brief-${threadId}.pdf`}
+                />
+              )}
             </div>
 
             {/* Score gauges */}
